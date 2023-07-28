@@ -1,4 +1,4 @@
-package com.miiladshabanii.news.data
+package com.miiladshabanii.news.data.remote.util
 
 import com.miiladshabanii.news.model.News
 

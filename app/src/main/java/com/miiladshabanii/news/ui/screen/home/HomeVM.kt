@@ -2,6 +2,7 @@ package com.miiladshabanii.news.ui.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.map
 import com.miiladshabanii.news.domain.base.Result
 import com.miiladshabanii.news.domain.usecase.NewsUseCase
 import com.miiladshabanii.news.model.News
@@ -10,7 +11,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,28 +24,24 @@ class HomeVM @Inject constructor(
 ) : ViewModel() {
 
     private var _state: MutableStateFlow<HomeState> = MutableStateFlow(HomeState.defaultInitState)
-    val state: StateFlow<HomeState> = _state
+    val state: StateFlow<HomeState> = _state.asStateFlow()
 
     init {
         getNews()
     }
 
-    private fun getNews() =
-        viewModelScope.launch(Dispatchers.IO) {
-            newsUseCase.invoke(false).collectLatest {
-                when (it) {
-                    is Result.Error -> TODO()
-                    Result.Loading -> TODO()
-                    is Result.Success -> _state.emit(
-                        HomeState(
-                            state = BaseState.State.SUCCESS,
-                            data = it.data,
-                            errorMsg = null
-                        )
-                    )
-                }
-            }
+    fun getNews() = newsUseCase.invoke(false).map {
+        it.map { news ->
+            News(
+                title = news.title?:"",
+                content = news.content?:"",
+                author = news.author ?:"",
+                dateTime = news.publishedAt?:"",
+                desc = news.description?:"",
+                imageUrl = news.urlToImage?:""
+            )
         }
+    }
 }
 
 data class HomeState(
